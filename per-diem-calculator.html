@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Per Diem Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .travel-days-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+        }
+        .rates-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .days-section {
+            margin-top: 20px;
+        }
+        .day-container {
+            background-color: #e3f2fd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 150px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .checkbox-group {
+            margin: 10px 0;
+        }
+        .checkbox-label {
+            font-weight: normal;
+            margin-left: 5px;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .results h3 {
+            margin-top: 0;
+        }
+        .day-summary {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .day-total {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .amount-display {
+            font-family: monospace;
+            font-size: 1.2em;
+            color: #2c5282;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .day-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .meal-list {
+            margin-top: 5px;
+            margin-left: 15px;
+        }
+        .meal-item {
+            margin: 3px 0;
+            font-family: monospace;
+        }
+        .total-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #dee2e6;
+        }
+        .included-text {
+            color: #4a5568;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .first-last-day {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Travel Per Diem Calculator</h2>
+
+        <!-- Moved Travel Days section to the top -->
+        <div class="travel-days-section">
+            <div class="input-group">
+                <label for="numDays">Number of Travel Days:</label>
+                <input type="number" id="numDays" min="1" value="1">
+                <button onclick="generateDays()">Generate Days</button>
+            </div>
+        </div>
+        
+        <div class="rates-section">
+            <h3>Per Diem Rates</h3>
+            <div class="input-group">
+                <label for="breakfast">Breakfast Rate:</label>
+                <input type="number" id="breakfast" step="0.01" value="13.00">
+            </div>
+            <div class="input-group">
+                <label for="lunch">Lunch Rate:</label>
+                <input type="number" id="lunch" step="0.01" value="15.00">
+            </div>
+            <div class="input-group">
+                <label for="dinner">Dinner Rate:</label>
+                <input type="number" id="dinner" step="0.01" value="26.00">
+            </div>
+            <div class="input-group">
+                <label for="incidental">Incidental Rate:</label>
+                <input type="number" id="incidental" step="0.01" value="5.00">
+            </div>
+            <div class="input-group">
+                <label for="firstLastDay">First/Last Day Rate (% of full day):</label>
+                <input type="number" id="firstLastDay" step="1" value="75">
+            </div>
+        </div>
+
+        <div id="daysContainer" class="days-section">
+            <!-- Days will be generated here -->
+        </div>
+
+        <div class="results">
+            <h3>Per Diem Summary</h3>
+            <div id="dailyBreakdown"></div>
+            <div class="total-section">
+                <h4>Grand Total: $<span id="totalAmount">0.00</span></h4>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generateDays() {
+            const container = document.getElementById('daysContainer');
+            const numDays = parseInt(document.getElementById('numDays').value) || 0;
+            
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= numDays; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day-container';
+                
+                const isFirstOrLast = (i === 1 || i === numDays);
+                const dayClass = isFirstOrLast ? 'first-last-day' : '';
+                
+                dayElement.innerHTML = `
+                    <div class="${dayClass}">
+                        <h4>Day ${i} ${isFirstOrLast ? '(First/Last Day Rate Applies)' : ''}</h4>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="breakfast_${i}" onchange="calculateTotal()">
+                            <label class="checkbox-label" for="breakfast_${i}">Conference Provided Breakfast</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="lunch_${i}" onchange="calculateTotal()">
+                            <label class="checkbox-label" for="lunch_${i}">Conference Provided Lunch</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="dinner_${i}" onchange="calculateTotal()">
+                            <label class="checkbox-label" for="dinner_${i}">Conference Provided Dinner</label>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(dayElement);
+            }
+            
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const breakfastRate = parseFloat(document.getElementById('breakfast').value) || 0;
+            const lunchRate = parseFloat(document.getElementById('lunch').value) || 0;
+            const dinnerRate = parseFloat(document.getElementById('dinner').value) || 0;
+            const incidentalRate = parseFloat(document.getElementById('incidental').value) || 0;
+            const firstLastDayPercent = parseFloat(document.getElementById('firstLastDay').value) || 100;
+            const numDays = parseInt(document.getElementById('numDays').value) || 0;
+            
+            let total = 0;
+            
+            for (let i = 1; i <= numDays; i++) {
+                const isFirstOrLast = (i === 1 || i === numDays);
+                const dayMultiplier = isFirstOrLast ? (firstLastDayPercent / 100) : 1;
+                
+                // Add incidental for each day
+                total += incidentalRate * dayMultiplier;
+                
+                // Check which meals were not provided and add their rates
+                if (!document.getElementById(`breakfast_${i}`).checked) {
+                    total += breakfastRate * dayMultiplier;
+                }
+                if (!document.getElementById(`lunch_${i}`).checked) {
+                    total += lunchRate * dayMultiplier;
+                }
+                if (!document.getElementById(`dinner_${i}`).checked) {
+                    total += dinnerRate * dayMultiplier;
+                }
+            }
+            
+                        // Update daily breakdown
+            const breakdownContainer = document.getElementById('dailyBreakdown');
+            breakdownContainer.innerHTML = '';
+            
+            for (let i = 1; i <= numDays; i++) {
+                const isFirstOrLast = (i === 1 || i === numDays);
+                const dayMultiplier = isFirstOrLast ? (firstLastDayPercent / 100) : 1;
+                
+                let dayTotal = incidentalRate * dayMultiplier; // Start with incidental
+                
+                // Calculate meals for this day
+                if (!document.getElementById(`breakfast_${i}`).checked) {
+                    dayTotal += breakfastRate * dayMultiplier;
+                }
+                if (!document.getElementById(`lunch_${i}`).checked) {
+                    dayTotal += lunchRate * dayMultiplier;
+                }
+                if (!document.getElementById(`dinner_${i}`).checked) {
+                    dayTotal += dinnerRate * dayMultiplier;
+                }
+                
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day-summary';
+                dayElement.innerHTML = `
+                    <div class="day-total">
+                        <strong>Day ${i}${isFirstOrLast ? ' (First/Last Day Rate Applied)' : ''}:</strong> 
+                        ${dayTotal.toFixed(2)}
+                    </div>
+                    <div class="day-details">
+                        Included: Incidental (${(incidentalRate * dayMultiplier).toFixed(2)})
+                        ${!document.getElementById(`breakfast_${i}`).checked ? `, Breakfast (${(breakfastRate * dayMultiplier).toFixed(2)})` : ''}
+                        ${!document.getElementById(`lunch_${i}`).checked ? `, Lunch (${(lunchRate * dayMultiplier).toFixed(2)})` : ''}
+                        ${!document.getElementById(`dinner_${i}`).checked ? `, Dinner (${(dinnerRate * dayMultiplier).toFixed(2)})` : ''}
+                    </div>
+                `;
+                breakdownContainer.appendChild(dayElement);
+            }
+            
+            // Update grand total
+            document.getElementById('totalAmount').textContent = total.toFixed(2);
+        }
+
+        // Add event listeners to rate inputs
+        document.getElementById('breakfast').addEventListener('input', calculateTotal);
+        document.getElementById('lunch').addEventListener('input', calculateTotal);
+        document.getElementById('dinner').addEventListener('input', calculateTotal);
+        document.getElementById('incidental').addEventListener('input', calculateTotal);
+        document.getElementById('firstLastDay').addEventListener('input', calculateTotal);
+
+        // Initial generation
+        generateDays();
+    </script>
+</body>
+</html>
